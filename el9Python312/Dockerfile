@@ -29,7 +29,9 @@ RUN yum update -y && \
     tcl-devel \
     tk-devel \
     openssl-devel \
-    which
+    which \
+    centos-release-scl && \
+    yum install -y devtoolset-11
 
 # Install Development Tools and additional groups
 RUN yum groups mark install "Development Tools" && \
@@ -44,7 +46,8 @@ ENV LC_ALL en_US.UTF-8
 
 # Download, compile, and install the latest OpenSSL
 WORKDIR /usr/src
-RUN wget https://www.openssl.org/source/openssl-1.1.1u.tar.gz && \
+RUN source /opt/rh/devtoolset-11/enable && \
+    wget https://www.openssl.org/source/openssl-1.1.1u.tar.gz && \
     tar -xzf openssl-1.1.1u.tar.gz && \
     cd openssl-1.1.1u && \
     ./config --prefix=/usr/local/openssl --openssldir=/usr/local/openssl && \
@@ -63,12 +66,13 @@ RUN echo "/usr/local/openssl/lib" > /etc/ld.so.conf.d/openssl.conf && ldconfig
 
 # Download and compile Python 3.12 source code
 WORKDIR /usr/src
-RUN wget https://www.python.org/ftp/python/3.12.0/Python-3.12.0.tgz && \
+RUN source /opt/rh/devtoolset-11/enable && \
+    wget https://www.python.org/ftp/python/3.12.0/Python-3.12.0.tgz && \
     tar -xzf Python-3.12.0.tgz && \
     cd Python-3.12.0 && \
     CFLAGS="$(pkg-config --cflags openssl)" \
     LDFLAGS="$(pkg-config --libs openssl)" \
-    ./configure --prefix=/usr/local/python3.12 --with-openssl=/usr/local/openssl --enable-optimizations --enable-shared && \
+    ./configure --prefix=/usr/local/python3.12 --with-openssl=/usr/local/openssl --enable-optimizations --enable-shared --with-lto && \
     make -j$(nproc) && \
     make altinstall
 
@@ -81,7 +85,7 @@ RUN mkdir -p /portable-python && \
 
 # Verify the installation
 ENV LD_LIBRARY_PATH=/usr/local/python3.12/lib:$LD_LIBRARY_PATH
-RUN /usr/local/python3.12/bin/python3.12 --version
+RUN source /opt/rh/devtoolset-11/enable && /usr/local/python3.12/bin/python3.12 --version
 
 # Compress the Python 3.12 installation
 RUN cd /portable-python && \
