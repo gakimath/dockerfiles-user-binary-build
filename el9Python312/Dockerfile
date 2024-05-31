@@ -50,6 +50,8 @@ RUN source /opt/rh/devtoolset-11/enable && \
     wget https://www.openssl.org/source/openssl-1.1.1u.tar.gz && \
     tar -xzf openssl-1.1.1u.tar.gz && \
     cd openssl-1.1.1u && \
+    CFLAGS="-O3 -march=native -flto" \
+    LDFLAGS="-O3 -march=native -flto" \
     ./config --prefix=/usr/local/openssl --openssldir=/usr/local/openssl && \
     make -j$(nproc) && \
     make install && \
@@ -70,8 +72,9 @@ RUN source /opt/rh/devtoolset-11/enable && \
     wget https://www.python.org/ftp/python/3.12.0/Python-3.12.0.tgz && \
     tar -xzf Python-3.12.0.tgz && \
     cd Python-3.12.0 && \
-    CFLAGS="$(pkg-config --cflags openssl)" \
-    LDFLAGS="$(pkg-config --libs openssl)" \
+    CFLAGS="-O3 -march=native -flto $(pkg-config --cflags openssl)" \
+    CXXFLAGS="-O3 -march=native -flto $(pkg-config --cflags openssl)" \
+    LDFLAGS="-O3 -march=native -flto $(pkg-config --libs openssl)" \
     ./configure --prefix=/usr/local/python3.12 --with-openssl=/usr/local/openssl --enable-optimizations --enable-shared --with-lto && \
     make -j$(nproc) && \
     make altinstall
